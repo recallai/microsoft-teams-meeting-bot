@@ -1,0 +1,19 @@
+services:
+  bot-launcher-server:
+    container_name: bot-launcher-server
+    build:
+      context: .
+      dockerfile: ./apps/bot-launcher-server/Dockerfile
+    ports:
+      - "${BOT_LAUNCHER_SERVER_PORT:-4100}:${BOT_LAUNCHER_SERVER_PORT:-4100}"
+    environment:
+      - NODE_ENV=development
+      - BOT_LAUNCHER_SERVER_PORT=${BOT_LAUNCHER_SERVER_PORT:-4100}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - client-dev-network
+
+networks:
+  client-dev-network:
+    driver: bridge

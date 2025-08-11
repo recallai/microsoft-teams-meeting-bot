@@ -1,0 +1,35 @@
+{
+  "name": "microsoft-teams-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "packageManager": "npm@10.5.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "clean": "rm -rf node_modules logs .turbo **/*/node_modules **/*/logs **/*/dist **/*/.next **/*/.turbo",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "dev:teams-bot": "turbo run dev --filter=teams-bot"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@types/dockerode": "^3.3.42",
+    "@types/express": "^5.0.3",
+    "@types/ws": "^8.18.1",
+    "turbo": "^2.5.5"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dockerode": "^4.0.7",
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
+  }
+}
