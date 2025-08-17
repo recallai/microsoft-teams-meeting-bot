@@ -115,7 +115,7 @@ deploy_bot_from_env() {
     print_message "Starting bot deployment from .env configuration..."
 
     if ! docker-compose ps | grep -q "bot-launcher-server"; then
-        print_error "The bot-launcher-server is not running. Please start it with './scripts.sh upd'"
+        print_error "The bot-launcher-server is not running. Please start it with './scripts.sh up'"
         exit 1
     fi
 
