@@ -1,15 +1,6 @@
 # Open Source Microsoft Teams Meeting Bot
 
-This is an open source Microsoft Teams bot built by Recall.ai. It is designed to be deployed dynamically to join Microsoft Teams meetings, capture transcription data, and forward it to specified webhook or WebSocket endpoints.
-
-## Architecture
-
-The system consists of two main services:
-
-1.  **Bot Launcher Server**: A lightweight Node.js server that exposes an API to launch new bot instances on demand. It uses Dockerode to interact with the Docker daemon.
-2.  **Teams Bot**: A Playwright-based bot that runs in a headless browser. Each instance is a separate container, launched by the Bot Launcher Server, that joins a specific meeting.
-
-This architecture allows you to scale and manage a fleet of meeting bots
+This is an open source Microsoft Teams bot built by Recall.ai. It is designed to be deployed dynamically to join Microsoft Teams meetings, capture transcription data, and forward it to specified webhook or websocket endpoint(s).
 
 ## Prerequisites
 
@@ -57,7 +48,7 @@ Before you begin, ensure you have the following installed:
       NOTIFIER_URLS=wss://YOUR_NGROK_URL/api/ws/bot,https://YOUR_NGROK_URL/api/wh/bot
       ```
 
-    **⚠️ Important:** Both `deploy-bot` and `run:teams-bot` commands read configuration from this `.env` file. If you update the `.env` file, make sure to restart any running services or redeploy bots to pick up the changes. Not updating the `.env` properly may lead to bots trying to connect to old URLs or using incorrect configuration.
+    **⚠️ Important:** Both `deploy-bot` and `run:teams-bot` commands read configs from this `.env` file. If you update the `.env` file, make sure to restart any running services or redeploy bots to pick up the changes. Not updating the `.env` properly may lead to bots trying to connect to old URLs or using incorrect configs.
 
 4.  **Start the Bot Launcher Server:**
 
@@ -71,7 +62,7 @@ Before you begin, ensure you have the following installed:
 
 5.  **Deploy a Bot:**
 
-    Use the `deploy-bot` command to launch a bot with your `.env` configuration:
+    Use the `deploy-bot` command to launch a bot with your `.env` configs:
 
     ```bash
     ./scripts.sh deploy-bot
@@ -99,22 +90,22 @@ This project includes a helper script `./scripts.sh` to manage the application.
 
 ### Other Commands
 
-| Command             | Description                                            |
-| ------------------- | ------------------------------------------------------ |
-| `upd`               | Starts the bot-launcher-server in detached mode        |
-| `logs`              | Follows logs from the bot-launcher-server              |
-| `logs:bot <BOT_ID>` | Follows logs for a specific teams-bot container        |
-| `build`             | Builds all necessary Docker images                     |
-| `run:teams-bot`     | Runs a standalone teams-bot using `.env` configuration |
+| Command             | Description                                      |
+| ------------------- | ------------------------------------------------ |
+| `upd`               | Starts the bot-launcher-server in detached mode  |
+| `logs`              | Follows logs from the bot-launcher-server        |
+| `logs:bot <BOT_ID>` | Follows logs for a specific teams-bot container  |
+| `build`             | Builds all necessary Docker images               |
+| `run:teams-bot`     | Runs a standalone teams-bot using `.env` configs |
 
-**Note:** Commands `deploy-bot` and `run:teams-bot` both read from the same `.env` file. Always update your `.env` file and restart services when changing configuration to avoid connection issues.
+**Note:** Commands `deploy-bot` and `run:teams-bot` both read from the same `.env` file. Always update your `.env` file and restart services when changing configs to avoid connection issues.
 
-## API Usage
+## Deploying via API
 
 You can also deploy bots by calling the launcher's API directly instead of using the `deploy-bot` script.
 
 **Endpoint**: `POST /api/bot`
-**Host**: `http://localhost:${BOT_LAUNCHER_SERVER_PORT}` or your ngrok URL
+**Host**: `    "https://YOUR_NGROK_URL/api/wh/bot"`
 
 ### Example `curl` Request
 
@@ -136,5 +127,48 @@ curl -X POST http://localhost:4100/api/bot \
 
 - Replace `YOUR_TEAMS_MEETING_URL` with an actual Teams meeting URL
 - Replace `YOUR_NGROK_URL` with your ngrok public URL (e.g., `abc123.ngrok.io`)
-- The `notifierUrls` should point to your ngrok URL so the bot can send data back to your local server
-- Using the `deploy-bot` script is recommended as it automatically uses your `.env` configuration
+- The `notifierUrls` should point to endpoints exposed through your ngrok URL or other external server to receive transcript events
+- Using the `deploy-bot` script is recommended as it automatically uses your `.env` configs
+
+## Architecture
+
+![Architecture Diagram](assets/architecture.png)
+
+The repo architecture is composed of two main dockerized servers:
+
+- **Bot Launcher Server**: This server is responsible for deploying Microsoft Teams bot servers. It exposes an API endpoint to dynamically launch new bot instances. For demonstration purposes, this server is also configured to receive and process the real-time transcription data sent by the bots.
+
+- **Microsoft Teams Bot Server**: Each instance of this server is a bot that joins a specified Microsoft Teams meeting. Its primary functions are to join the meeting, enable the meeting's captions, capture the transcription in real-time, and forward the data to a predefined notifier URL, which, in this setup, is the Bot Launcher Server.
+
+This dual-server setup is designed to mirror a typical production environment for deploying multiple bots.
+
+### Important Files
+
+The core logic for the Microsoft Teams Bot Server is organized into several key files:
+
+- **`apps/teams-bot/src/index.ts`**: The main entry point for the bot server. It initializes the bot and starts the "orchestrator".
+- **`apps/teams-bot/src/procedures/orchestrator.ts`**: Coordinates the overall flow and lifecycle of the bot: launching the browser, driving the join sequence, starting captions, tracking state, and shutting down cleanly.
+- **`apps/teams-bot/src/procedures/join-procedure.ts`**: Implements the join flow. You'll find the primary methods the orchestrator calls:
+  - `startMeetingLauncherFlow(meetingUrl)`: Resolves the Teams meeting URL to the browser join flow and navigates past the launcher dialog.
+  - `joinMeetingLobbyFlow()`: Fills in the bot name and clicks "Join now" to enter the lobby.
+  - `isInMeetingLobby({ waitForSeconds })`: Checks if the bot is waiting lobby state within the timeout period.
+  - `isInMeeting({ waitForSeconds })`: Checks if the bot is in the call within the timeout period.
+  - `leaveMeetingFlow()`: Gracefully leaves the meeting when shutting down.
+    The "orchestrator" executes these in sequence to progress from: start link → lobby → in-call.
+- **`apps/teams-bot/src/procedures/captions-procedure.ts`**: Implements the captions flow. Core methods are:
+  - `enableCaptionsFlow()`: Opens the in-call menu and turns on live captions.
+  - `subscribeToCaptions()`: Watches the captions DOM for finalized updates and emits transcript events.
+    The "orchestrator" calls these after the bot has joined the meeting to start streaming captions.
+
+### Debugging the Teams bot
+
+When running locally, each bot instance writes logs and transcripts to the repository's `output/` directory (paths are relative to where you start the process and are created automatically if missing):
+
+- **Logs**
+
+  - Location: `output/logs/`
+  - Filename: `<ISO_TIMESTAMP>-<BOT_ID>.log` (example: `2025-01-02T03:04:05.678Z-<BOT_ID>.log`)
+
+- **Transcripts**
+  - Location: `output/transcripts/`
+  - Filename: `<ISO_TIMESTAMP>-<BOT_ID>.jsonl`
