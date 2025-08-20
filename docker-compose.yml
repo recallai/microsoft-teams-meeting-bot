@@ -9,6 +9,7 @@ services:
     environment:
       - NODE_ENV=development
       - BOT_LAUNCHER_SERVER_PORT=${BOT_LAUNCHER_SERVER_PORT:-4100}
+      - DOCKER_NETWORK=client-dev-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
@@ -16,4 +17,5 @@ services:
 
 networks:
   client-dev-network:
+    name: client-dev-network
     driver: bridge

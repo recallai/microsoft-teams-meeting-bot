@@ -48,7 +48,7 @@ Before you begin, ensure you have the following installed:
       NOTIFIER_URLS=wss://YOUR_NGROK_DOMAIN/api/ws/bot,https://YOUR_NGROK_DOMAIN/api/wh/bot
       ```
 
-    **⚠️ Important:** Both `deploy-bot` and `run:teams-bot` commands read configs from this `.env` file. If you update the `.env` file, make sure to restart any running services or redeploy bots to pick up the changes. Not updating the `.env` properly may lead to bots trying to connect to old URLs or using incorrect configs.
+    **⚠️ Important:** Both `deploy_bot` and `run:teams_bot` commands read configs from this `.env` file. If you update the `.env` file, make sure to restart any running services or redeploy bots to pick up the changes. Not updating the `.env` properly may lead to bots trying to connect to old URLs or using incorrect configs.
 
 4.  **Start the Bot Launcher Server:**
 
@@ -62,10 +62,10 @@ Before you begin, ensure you have the following installed:
 
 5.  **Deploy a Bot:**
 
-    Use the `deploy-bot` command to launch a bot with your `.env` configs:
+    Use the `deploy_bot` command to launch a bot with your `.env` configs:
 
     ```bash
-    ./scripts.sh deploy-bot
+    ./scripts.sh deploy_bot
     ```
 
     This command will:
@@ -85,7 +85,7 @@ This project includes a helper script `./scripts.sh` to manage the application.
 | Command      | Description                                              |
 | ------------ | -------------------------------------------------------- |
 | `up`         | Builds and starts services, attaching logs immediately   |
-| `deploy-bot` | Deploys a new bot using `.env` config and tails its logs |
+| `deploy_bot` | Deploys a new bot using `.env` config and tails its logs |
 | `down`       | Stops all services                                       |
 
 ### Other Commands
@@ -96,13 +96,13 @@ This project includes a helper script `./scripts.sh` to manage the application.
 | `logs`              | Follows logs from the bot-launcher-server        |
 | `logs:bot <BOT_ID>` | Follows logs for a specific teams-bot container  |
 | `build`             | Builds all necessary Docker images               |
-| `run:teams-bot`     | Runs a standalone teams-bot using `.env` configs |
+| `run:teams_bot`     | Runs a standalone teams-bot using `.env` configs |
 
-**Note:** Commands `deploy-bot` and `run:teams-bot` both read from the same `.env` file. Always update your `.env` file and restart services when changing configs to avoid connection issues.
+**Note:** Commands `deploy_bot` and `run:teams_bot` both read from the same `.env` file. Always update your `.env` file and restart services when changing configs to avoid connection issues.
 
 ## Deploying via API
 
-You can also deploy bots by calling the launcher's API directly instead of using the `deploy-bot` script.
+You can also deploy bots by calling the launcher's API directly instead of using the `deploy_bot` script.
 
 **Endpoint**: `POST /api/bot`
 **Host**: `    "https://YOUR_NGROK_DOMAIN/api/wh/bot"`
@@ -128,7 +128,7 @@ curl -X POST https://YOUR_NGROK_DOMAIN/api/bot \
 - Replace `YOUR_TEAMS_MEETING_URL` with an actual Teams meeting URL
 - Replace `YOUR_NGROK_DOMAIN` with your ngrok public URL (e.g., `abc123.ngrok.io`)
 - The `notifierUrls` should point to endpoints exposed through your ngrok URL or other external server to receive transcript events
-- Using the `deploy-bot` script is recommended as it automatically uses your `.env` configs
+- Using the `deploy_bot` script is recommended as it automatically uses your `.env` configs
 
 ## Architecture
 

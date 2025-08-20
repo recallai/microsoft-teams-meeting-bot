@@ -20,6 +20,31 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Check if a TCP port is in use on the host
+is_port_in_use() {
+	PORT_TO_CHECK=$1
+	if lsof -nP -iTCP:${PORT_TO_CHECK} -sTCP:LISTEN >/dev/null 2>&1; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+# Find a free TCP port between a start and end range (inclusive)
+find_free_port() {
+	START_PORT=${1:-4101}
+	END_PORT=${2:-4199}
+	CURRENT_PORT=$START_PORT
+	while [ $CURRENT_PORT -le $END_PORT ]; do
+		if ! is_port_in_use $CURRENT_PORT; then
+			echo $CURRENT_PORT
+			return 0
+		fi
+		CURRENT_PORT=$((CURRENT_PORT+1))
+	done
+	return 1
+}
+
 # Source .env file if it exists, using a robust method
 if [ -f .env ]; then
     print_message "Loading environment variables from .env file..."
@@ -39,7 +64,16 @@ build_teams_bot() {
 run_teams_bot_standalone() {
     print_message "Running teams-bot Docker container in standalone mode..."
     
-    PORT=${PORT:-4101}
+    # Use provided PORT or find a free one in range 4101-4199
+    if [ -z "$PORT" ]; then
+		FREE_PORT=$(find_free_port 4101 4199)
+		if [ -z "$FREE_PORT" ]; then
+			print_error "No free port found between 4101-4199. Please free a port or set PORT explicitly."
+			exit 1
+		fi
+		PORT=$FREE_PORT
+		print_message "Selected free port: ${PORT}"
+	fi
     BOT_ID=${BOT_ID:-$(uuidgen)}
 
     if [ -z "$MEETING_URL" ] || [ -z "$NOTIFIER_URLS" ]; then
@@ -125,20 +159,32 @@ deploy_bot_from_env() {
     fi
     
     LAUNCHER_PORT=${BOT_LAUNCHER_SERVER_PORT:-4100}
-    BOT_PORT=${PORT:-4101}
+    BOT_PORT=${PORT}
     
     # Correctly format the comma-separated URLs into a JSON array of strings
     JSON_NOTIFIER_URLS=$(echo "${NOTIFIER_URLS}" | sed 's/,/","/g' | sed 's/^/"/' | sed 's/$/"/')
 
     print_message "Sending deployment request to the launcher on port ${LAUNCHER_PORT}..."
-    response=$(curl -s -X POST http://localhost:${LAUNCHER_PORT}/api/bot \
-    -H "Content-Type: application/json" \
-    -d "{
-      \"port\": ${BOT_PORT},
-      \"meetingUrl\": \"${MEETING_URL}\",
-      \"notifierUrls\": [${JSON_NOTIFIER_URLS}],
-      \"botId\": \"$(uuidgen)\"
-    }")
+    if [ -n "$BOT_PORT" ]; then
+		# Use explicit port if provided
+		response=$(curl -s -X POST http://localhost:${LAUNCHER_PORT}/api/bot \
+		-H "Content-Type: application/json" \
+		-d "{
+		  \"port\": ${BOT_PORT},
+		  \"meetingUrl\": \"${MEETING_URL}\",
+		  \"notifierUrls\": [${JSON_NOTIFIER_URLS}],
+		  \"botId\": \"$(uuidgen)\"
+		}")
+    else
+		# Omit port to let the launcher choose a random free one
+		response=$(curl -s -X POST http://localhost:${LAUNCHER_PORT}/api/bot \
+		-H "Content-Type: application/json" \
+		-d "{
+		  \"meetingUrl\": \"${MEETING_URL}\",
+		  \"notifierUrls\": [${JSON_NOTIFIER_URLS}],
+		  \"botId\": \"$(uuidgen)\"
+		}")
+    fi
 
     botId=$(echo $response | sed -n 's/.*"botId":"\([^"]*\)".*/\1/p')
 
@@ -159,7 +205,7 @@ show_help() {
     echo ""
     echo "Primary Workflow:"
     echo "  up                    Starts services and attaches logs immediately."
-    echo "  deploy-bot            Deploys a new bot using config from .env and tails its logs."
+    echo "  deploy_bot            Deploys a new bot using config from .env and tails its logs."
     echo "  down                  Stops all services."
     echo ""
     echo "Other Commands:"
@@ -167,7 +213,7 @@ show_help() {
     echo "  logs                  Follows logs from the bot-launcher-server."
     echo "  logs:bot <BOT_ID>     Follows logs for a specific teams-bot container."
     echo "  build                 Builds all necessary Docker images."
-    echo "  run:teams-bot         Run a single teams-bot from .env configuration."
+    echo "  run:teams_bot         Run a single teams-bot from .env configuration."
     echo ""
 }
 
@@ -193,7 +239,7 @@ case "$1" in
     run:teams_bot)
         run_teams_bot_standalone
         ;;
-    deploy_bot_from_env)
+    deploy_bot)
         deploy_bot_from_env
         ;;
     help|""|*)

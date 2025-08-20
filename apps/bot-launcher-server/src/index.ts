@@ -42,6 +42,8 @@ app.post('/api/bot', async (req, res) => {
     try {
         console.log(`Attempting to start bot container for botId: ${botId}. config: ${JSON.stringify(env)}`);
 
+        const dockerNetworkName = process.env.DOCKER_NETWORK || 'client-dev-network';
+
         await docker.createContainer({
             Image: 'teams-bot:latest',
             Env: env,
@@ -50,7 +52,7 @@ app.post('/api/bot', async (req, res) => {
                 PortBindings: {
                     [`${port}/tcp`]: [{ HostPort: `${port}` }]
                 },
-                NetworkMode: 'microsoft-teams-bot_client-dev-network'
+                NetworkMode: dockerNetworkName
             }
         }).then(container => container.start());
 
