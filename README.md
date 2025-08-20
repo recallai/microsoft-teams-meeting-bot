@@ -45,7 +45,7 @@ Before you begin, ensure you have the following installed:
     - `MEETING_URL`: The default Teams meeting URL for bots to join
     - `NOTIFIER_URLS`: Comma-separated URLs where bots send data. Use your ngrok URL here:
       ```
-      NOTIFIER_URLS=wss://YOUR_NGROK_URL/api/ws/bot,https://YOUR_NGROK_URL/api/wh/bot
+      NOTIFIER_URLS=wss://YOUR_NGROK_DOMAIN/api/ws/bot,https://YOUR_NGROK_DOMAIN/api/wh/bot
       ```
 
     **⚠️ Important:** Both `deploy-bot` and `run:teams-bot` commands read configs from this `.env` file. If you update the `.env` file, make sure to restart any running services or redeploy bots to pick up the changes. Not updating the `.env` properly may lead to bots trying to connect to old URLs or using incorrect configs.
@@ -105,19 +105,19 @@ This project includes a helper script `./scripts.sh` to manage the application.
 You can also deploy bots by calling the launcher's API directly instead of using the `deploy-bot` script.
 
 **Endpoint**: `POST /api/bot`
-**Host**: `    "https://YOUR_NGROK_URL/api/wh/bot"`
+**Host**: `    "https://YOUR_NGROK_DOMAIN/api/wh/bot"`
 
 ### Example `curl` Request
 
 ```bash
-curl -X POST http://localhost:4100/api/bot \
+curl -X POST https://YOUR_NGROK_DOMAIN/api/bot \
 -H "Content-Type: application/json" \
 -d '{
   "port": 4102,
   "meetingUrl": "YOUR_TEAMS_MEETING_URL",
   "notifierUrls": [
-    "wss://YOUR_NGROK_URL/api/ws/bot",
-    "https://YOUR_NGROK_URL/api/wh/bot"
+    "wss://YOUR_NGROK_DOMAIN/api/ws/bot",
+    "https://YOUR_NGROK_DOMAIN/api/wh/bot"
   ],
   "botId": "'$(uuidgen)'"
 }'
@@ -126,7 +126,7 @@ curl -X POST http://localhost:4100/api/bot \
 **Important:**
 
 - Replace `YOUR_TEAMS_MEETING_URL` with an actual Teams meeting URL
-- Replace `YOUR_NGROK_URL` with your ngrok public URL (e.g., `abc123.ngrok.io`)
+- Replace `YOUR_NGROK_DOMAIN` with your ngrok public URL (e.g., `abc123.ngrok.io`)
 - The `notifierUrls` should point to endpoints exposed through your ngrok URL or other external server to receive transcript events
 - Using the `deploy-bot` script is recommended as it automatically uses your `.env` configs
 
