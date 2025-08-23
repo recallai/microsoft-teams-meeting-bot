@@ -41,7 +41,6 @@ Before you begin, ensure you have the following installed:
 
     **Required:**
 
-    - `BOT_LAUNCHER_SERVER_PORT`: The port for the launcher server (e.g., `4100`)
     - `MEETING_URL`: The default Teams meeting URL for bots to join
     - `NOTIFIER_URLS`: Comma-separated URLs where bots send data. Use your ngrok URL here:
       ```
