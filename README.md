@@ -1,6 +1,6 @@
 # Open Source Microsoft Teams Meeting Bot
 
-This is an open source Microsoft Teams bot built by Recall.ai. It is designed to be deployed dynamically to join Microsoft Teams meetings, capture transcription data, and forward it to specified webhook or websocket endpoint(s).
+This is an open source Microsoft Teams bot built by Recall.ai. It is designed to be deployed dynamically to join Microsoft Teams meetings, capture transcription data, and forward it to specified webhook or websocket endpoint(s). If you're interested in understanding the pros, cons, and architecture decisions, check out the [How to build a Microsoft Teams Bot](https://www.recall.ai/blog/how-to-build-a-microsoft-teams-bot) blog. If you'd rather not build this yourself, you can check out Recall.ai's [Microsoft Teams Bot API](https://www.recall.ai/product/meeting-bot-api/microsoft-teams) which works across all major meeting platforms. 
 
 ## Prerequisites
 
